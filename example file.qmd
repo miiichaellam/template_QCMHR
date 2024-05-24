@@ -1,0 +1,115 @@
+---
+title: "Example use of template"
+title-block-banner: true
+format: html
+embed-resources: true
+page-layout: full
+toc: true
+theme: 
+- qcmhr.scss
+---
+
+```{r include=FALSE}
+
+# Packages needed
+pacman::p_load(
+  tidyverse,
+  reactable,
+  reactablefmtr,
+  quarto,
+  plotly
+)
+# Set all chunks to only print output, not show code
+knitr::opts_chunk$set(echo = FALSE)
+
+# Creating list of fake data to use
+example_data = list(
+  # Plotly
+  plotly_data = tibble(
+  "Date" = dmy(paste0("01-01","-",2010:2020))
+) %>% 
+  mutate(
+    "Mental health" = sample(1:10000,replace = F,size = n()),
+    "Physical health" = sample(1:10000,replace = F,size = n()),
+  ) %>% 
+  pivot_longer(cols = -Date,names_to = "Health service presentation",values_to = "N"),
+# Reactable data
+react_data = tibble(
+  "Condition" =  c( 
+          "Alcohol", 
+          "Cannabinoid", 
+          "Nicotine", 
+          "All stimulants", 
+          "Opioids", 
+          "Sedatives and hypnotics",
+          "Multiple and other")) %>% 
+  mutate(
+    perc = round(abs(rnorm(n = n(),mean = 30,sd = 15)),digits = 0)
+  ))
+
+```
+# Heading 1
+Example of a self-contained HTML file. All that's needed to run this is a web-browser. Internet connection is needed if downloading the file (see the end)
+
+## Heading 2
+Example text by chat GPT: The old rocking chair creaked a rhythmic sigh as Amelia peered out the window. Raindrops chased each other down the glass, blurring the vibrant greens and purples of her flourishing garden. A bittersweet pang tugged at her heart. This was the same view she'd enjoyed for decades, a silent witness to countless sunrises and the changing seasons. Now, with her move to the city imminent, it felt like a cherished chapter closing.
+
+# Results
+## Table example
+You can expand the tabs, there is a table in each and both are using reactable. @tbl-1 shows output that is more interactive. You can search, filter, etc. Second table is more static. More details of reactable at https://glin.github.io/reactable/ 
+
+
+
+::: panel-tabset
+### Example 1
+
+
+```{r}
+#| label: tbl-1
+#| tbl-cap: Example of table
+
+reactable(data = example_data$react_data,sortable = T,highlight = T,bordered = T,searchable = T,
+          columns = list(
+            perc = colDef(name = "Percentage of people",
+                          cell = reactablefmtr::data_bars(example_data$react_data,
+                                                            number_fmt = scales::number_format(suffix = "%"),
+                                                            max_value = 100,
+                                                            round_edges = T, fill_color = "#54B7B2",
+                                                            
+                       text_position = "above"))
+          ))
+          
+```
+
+### Example 2
+```{r}
+reactable(data = example_data$react_data,defaultSorted = "perc",
+          defaultSortOrder = "desc",
+          columns = list(
+            perc = colDef(name = "Number",
+                          style = color_scales(example_data$react_data, colors = viridis::viridis(5)))
+          )) 
+```
+:::
+
+### Figure example
+@fig-1 shows what can be done using plotly. Hover over the values to see numbers, download the file etc.
+
+```{r}
+#| label: fig-1
+#| fig-cap: Number of health service presentation across time
+
+ggplotly(
+  example_data$plotly_data %>% 
+  ggplot(aes(x = Date,y = N,color = `Health service presentation`)) +
+    geom_point() +
+  geom_line() +
+    labs(x = "Time", y = "Number of people") +
+  theme_bw()
+)
+```
+
+
+# Download report
+Currently button below will download a QCMHR template. Can be adjusted to downloading anything
+<a href="https://github.com/miiichaellam/template_QCMHR/raw/main/eg_download.pdf" class="btn btn-secondary" download="sample_report.pdf" style="width: 300px;"><i class="fa fa-download"></i> <strong style="font-weight: bold;">Click here to download report as PDF</strong></a>
